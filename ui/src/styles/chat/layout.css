@@ -238,7 +238,15 @@
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-bottom: 8px;
+}
+
+/* Standalone image bubble - no extra padding around images */
+.chat-bubble--images {
+  padding: 6px;
+}
+
+.chat-bubble--images .chat-message-images {
+  margin-bottom: 0;
 }
 
 .chat-message-image {

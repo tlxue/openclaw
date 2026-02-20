@@ -259,23 +259,34 @@ function renderGroupedMessage(
     return nothing;
   }
 
-  return html`
-    <div class="${bubbleClasses}">
-      ${canCopyMarkdown ? renderCopyAsMarkdownButton(markdown!) : nothing}
-      ${renderMessageImages(images)}
-      ${
-        reasoningMarkdown
-          ? html`<div class="chat-thinking">${unsafeHTML(
-              toSanitizedMarkdownHtml(reasoningMarkdown),
-            )}</div>`
-          : nothing
-      }
-      ${
-        markdown
-          ? html`<div class="chat-text">${unsafeHTML(toSanitizedMarkdownHtml(markdown))}</div>`
-          : nothing
-      }
-      ${toolCards.map((card) => renderToolCardSidebar(card, onOpenSidebar))}
-    </div>
-  `;
+  // Render images in a separate bubble so they don't break the text bubble layout
+  const imageBubble = hasImages
+    ? html`<div class="chat-bubble chat-bubble--images fade-in">
+        ${renderMessageImages(images)}
+      </div>`
+    : nothing;
+
+  const hasTextContent = Boolean(markdown) || Boolean(reasoningMarkdown) || hasToolCards;
+  const textBubble = hasTextContent
+    ? html`
+        <div class="${bubbleClasses}">
+          ${canCopyMarkdown ? renderCopyAsMarkdownButton(markdown!) : nothing}
+          ${
+            reasoningMarkdown
+              ? html`<div class="chat-thinking">${unsafeHTML(
+                  toSanitizedMarkdownHtml(reasoningMarkdown),
+                )}</div>`
+              : nothing
+          }
+          ${
+            markdown
+              ? html`<div class="chat-text">${unsafeHTML(toSanitizedMarkdownHtml(markdown))}</div>`
+              : nothing
+          }
+          ${toolCards.map((card) => renderToolCardSidebar(card, onOpenSidebar))}
+        </div>
+      `
+    : nothing;
+
+  return html`${imageBubble}${textBubble}`;
 }
