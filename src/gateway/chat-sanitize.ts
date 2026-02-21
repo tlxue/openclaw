@@ -121,3 +121,27 @@ export function stripEnvelopeFromMessages(messages: unknown[]): unknown[] {
   });
   return changed ? next : messages;
 }
+
+/**
+ * Fields considered core conversational content.
+ * Everything else is treated as metadata and stripped when `stripMetadata` is enabled.
+ */
+const CONTENT_FIELDS = new Set(["role", "content", "text", "timestamp"]);
+
+function stripMetadataFromMessage(message: unknown): unknown {
+  if (!message || typeof message !== "object") {
+    return message;
+  }
+  const entry = message as Record<string, unknown>;
+  const stripped: Record<string, unknown> = {};
+  for (const key of Object.keys(entry)) {
+    if (CONTENT_FIELDS.has(key)) {
+      stripped[key] = entry[key];
+    }
+  }
+  return stripped;
+}
+
+export function stripMetadataFromMessages(messages: unknown[]): unknown[] {
+  return messages.map(stripMetadataFromMessage);
+}

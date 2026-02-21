@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { stripEnvelopeFromMessage } from "./chat-sanitize.js";
+import { stripEnvelopeFromMessage, stripMetadataFromMessages } from "./chat-sanitize.js";
 
 describe("stripEnvelopeFromMessage", () => {
   test("removes message_id hint lines from user messages", () => {
@@ -38,5 +38,60 @@ describe("stripEnvelopeFromMessage", () => {
     };
     const result = stripEnvelopeFromMessage(input) as { content?: string };
     expect(result.content).toBe("note\n[message_id: 123]");
+  });
+});
+
+describe("stripMetadataFromMessages", () => {
+  test("keeps only role, content, text, and timestamp", () => {
+    const messages = [
+      {
+        role: "user",
+        content: [{ type: "text", text: "hello" }],
+        timestamp: 1700000000000,
+        parentId: "abc",
+        messageId: "def",
+        usage: { input: 10, output: 20 },
+        cost: { total: 0.001 },
+        model: "gpt-4",
+        provider: "openai",
+        api: "openai-responses",
+        stopReason: "stop",
+        __openclaw: { kind: "compaction" },
+      },
+    ];
+    const result = stripMetadataFromMessages(messages) as Array<Record<string, unknown>>;
+    expect(result).toHaveLength(1);
+    expect(result[0]).toEqual({
+      role: "user",
+      content: [{ type: "text", text: "hello" }],
+      timestamp: 1700000000000,
+    });
+  });
+
+  test("preserves text field as alternative to content", () => {
+    const messages = [
+      {
+        role: "assistant",
+        text: "hi there",
+        timestamp: 1700000000000,
+        usage: { input: 5, output: 10 },
+      },
+    ];
+    const result = stripMetadataFromMessages(messages) as Array<Record<string, unknown>>;
+    expect(result[0]).toEqual({
+      role: "assistant",
+      text: "hi there",
+      timestamp: 1700000000000,
+    });
+  });
+
+  test("handles empty array", () => {
+    expect(stripMetadataFromMessages([])).toEqual([]);
+  });
+
+  test("handles non-object messages", () => {
+    const messages = [null, "string", 42];
+    const result = stripMetadataFromMessages(messages);
+    expect(result).toEqual([null, "string", 42]);
   });
 });
